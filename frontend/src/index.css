@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display text-ink;
+  }
+  ::selection {
+    background-color: theme("colors.brass.light");
+  }
+  :focus-visible {
+    outline: 2px solid theme("colors.primary.DEFAULT");
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /*
+   * Key-tag badge — the app's signature element.
+   * Modeled on a physical hostel room-key fob: a pill shape with a
+   * small punched hole at the left edge. Used for every status
+   * indicator across the app (room/bed status, expense category,
+   * organization status) instead of generic colored dots.
+   */
+  .key-tag {
+    @apply relative inline-flex items-center gap-1.5 rounded-full pl-4 pr-3 py-1
+           text-xs font-semibold font-mono tracking-wide uppercase;
+  }
+  .key-tag::before {
+    content: "";
+    @apply absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-fog;
+  }
+  .key-tag--surface::before {
+    @apply bg-surface;
+  }
+
+  .key-tag--available { @apply bg-moss-light text-moss; }
+  .key-tag--occupied { @apply bg-brass/15 text-brass-dark; }
+  .key-tag--reserved { @apply bg-primary/10 text-primary-dark; }
+  .key-tag--maintenance,
+  .key-tag--closed,
+  .key-tag--full { @apply bg-clay-light text-clay; }
+  .key-tag--pending { @apply bg-brass/15 text-brass-dark; }
+  .key-tag--active { @apply bg-moss-light text-moss; }
+  .key-tag--suspended,
+  .key-tag--cancelled { @apply bg-clay-light text-clay; }
+  .key-tag--neutral { @apply bg-ink/5 text-ink-soft; }
+
+  .card {
+    @apply bg-surface rounded-xl2 border border-border shadow-card;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5
+           text-sm font-semibold text-white shadow-sm transition-colors
+           hover:bg-primary-dark active:bg-primary-dark disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5
+           text-sm font-semibold text-ink transition-colors
+           hover:bg-fog disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-clay px-4 py-2.5
+           text-sm font-semibold text-white shadow-sm transition-colors hover:opacity-90;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-ink
+           placeholder:text-ink-soft/60 focus:border-primary focus:ring-1 focus:ring-primary;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
