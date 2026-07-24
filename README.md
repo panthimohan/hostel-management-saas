@@ -136,3 +136,6 @@ hostel_saas/
 - All secrets are read from environment variables (`config/settings.py` uses `os.environ`/`django-environ`).
 - Passwords hashed via Django's default PBKDF2 (upgradeable to Argon2 by adding `argon2-cffi`).
 - `SECRET_KEY`, DB credentials, and JWT signing key are never committed — see `.env.example`.
+
+# hostel-management-saas
+Multi-tenant Hostel Management SaaS ERP built with Django REST Framework, React, PostgreSQL, and Docker.
