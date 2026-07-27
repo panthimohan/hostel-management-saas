@@ -8,7 +8,6 @@ from django.utils import timezone
 from utils.models import TenantModel
 
 
-
 class PaymentMethod(models.TextChoices):
 
     CASH = "CASH", "Cash"
@@ -31,7 +30,6 @@ class PaymentMethod(models.TextChoices):
 
 
 
-
 class InvoiceStatus(models.TextChoices):
 
     UNPAID = "UNPAID", "Unpaid"
@@ -44,7 +42,6 @@ class InvoiceStatus(models.TextChoices):
 
 
 
-
 class PaymentSubmissionStatus(models.TextChoices):
 
     PENDING = "PENDING", "Pending"
@@ -52,10 +49,6 @@ class PaymentSubmissionStatus(models.TextChoices):
     APPROVED = "APPROVED", "Approved"
 
     REJECTED = "REJECTED", "Rejected"
-
-
-
-
 
 
 
@@ -80,7 +73,6 @@ class RentInvoice(TenantModel):
     billing_period_end = models.DateField()
 
     due_date = models.DateField()
-
 
 
     rent_amount = models.DecimalField(
@@ -123,7 +115,6 @@ class RentInvoice(TenantModel):
     )
 
 
-
     class Meta:
 
         ordering = [
@@ -144,8 +135,7 @@ class RentInvoice(TenantModel):
         ]
 
 
-
-    def save(self,*args,**kwargs):
+    def save(self, *args, **kwargs):
 
         if not self.invoice_number:
 
@@ -154,9 +144,7 @@ class RentInvoice(TenantModel):
                 f"{timezone.now().strftime('%Y%m%d%H%M%S')}"
             )
 
-
-        super().save(*args,**kwargs)
-
+        super().save(*args, **kwargs)
 
 
 
@@ -180,8 +168,8 @@ class RentInvoice(TenantModel):
 
         return sum(
             (
-                p.amount
-                for p in self.payments.all()
+                payment.amount
+                for payment in self.payments.all()
             ),
             Decimal("0")
         )
@@ -191,10 +179,15 @@ class RentInvoice(TenantModel):
     @property
     def outstanding_balance(self):
 
-        return (
+        balance = (
             self.total_amount
             -
             self.amount_paid
+        )
+
+        return max(
+            balance,
+            Decimal("0")
         )
 
 
@@ -206,23 +199,23 @@ class RentInvoice(TenantModel):
 
         if paid <= 0:
 
-            status = InvoiceStatus.UNPAID
+            new_status = InvoiceStatus.UNPAID
 
 
         elif paid < self.total_amount:
 
-            status = InvoiceStatus.PARTIALLY_PAID
+            new_status = InvoiceStatus.PARTIALLY_PAID
 
 
         else:
 
-            status = InvoiceStatus.PAID
+            new_status = InvoiceStatus.PAID
 
 
 
-        if self.status != status:
+        if self.status != new_status:
 
-            self.status = status
+            self.status = new_status
 
             self.save(
                 update_fields=[
@@ -230,13 +223,8 @@ class RentInvoice(TenantModel):
                     "updated_at"
                 ]
             )
-
-
-
-
-
-
 class PaymentQR(TenantModel):
+
 
     hostel = models.ForeignKey(
         "hostels.Hostel",
@@ -278,12 +266,11 @@ class PaymentQR(TenantModel):
     )
 
 
-
     def clean(self):
 
         if self.is_active:
 
-            count = PaymentQR.objects.filter(
+            active_count = PaymentQR.objects.filter(
                 hostel=self.hostel,
                 is_active=True
             ).exclude(
@@ -291,7 +278,7 @@ class PaymentQR(TenantModel):
             ).count()
 
 
-            if count >= 5:
+            if active_count >= 5:
 
                 raise ValidationError(
                     "Maximum 5 active QR codes allowed."
@@ -299,12 +286,11 @@ class PaymentQR(TenantModel):
 
 
 
-    def save(self,*args,**kwargs):
+    def save(self, *args, **kwargs):
 
         self.full_clean()
 
-        super().save(*args,**kwargs)
-
+        super().save(*args, **kwargs)
 
 
 
@@ -317,6 +303,15 @@ class Payment(TenantModel):
         RentInvoice,
         on_delete=models.PROTECT,
         related_name="payments"
+    )
+
+
+    receipt_number = models.CharField(
+        max_length=50,
+        unique=True,
+        editable=False,
+        null=True,
+        blank=True
     )
 
 
@@ -347,8 +342,9 @@ class Payment(TenantModel):
     )
 
 
-    paid_on = models.DateField()
-
+    paid_on = models.DateField(
+        default=timezone.now
+    )
 
 
     recorded_by = models.ForeignKey(
@@ -365,15 +361,51 @@ class Payment(TenantModel):
 
 
 
-    def save(self,*args,**kwargs):
+    def clean(self):
 
-        super().save(*args,**kwargs)
+        if self.amount <= 0:
 
-        self.invoice.refresh_status()
+            raise ValidationError(
+                "Payment amount must be greater than zero."
+            )
+
+
+        if self._state.adding and self.invoice:
+
+            if self.amount > self.invoice.outstanding_balance:
+
+                raise ValidationError(
+                    "Payment exceeds outstanding balance."
+                )
 
 
 
+    def save(self, *args, **kwargs):
 
+        is_new = self.pk is None
+
+        self.full_clean()
+
+        super().save(*args, **kwargs)
+
+
+        if is_new and not self.receipt_number:
+
+            self.receipt_number = (
+                f"RCT-{self.organization_id}-"
+                f"{self.id:06d}"
+            )
+
+            Payment.objects.filter(
+                id=self.id
+            ).update(
+                receipt_number=self.receipt_number
+            )
+
+
+        if is_new:
+
+            self.invoice.refresh_status()
 class PaymentSubmission(TenantModel):
 
 
@@ -406,12 +438,15 @@ class PaymentSubmission(TenantModel):
 
 
     transaction_id = models.CharField(
-        max_length=150
+        max_length=150,
+        blank=True
     )
 
 
     screenshot = models.ImageField(
-        upload_to="payment_submissions/"
+        upload_to="payment_submissions/",
+        null=True,
+        blank=True
     )
 
 
@@ -442,9 +477,8 @@ class PaymentSubmission(TenantModel):
     )
 
 
-
     class Meta:
 
-        ordering=[
+        ordering = [
             "-created_at"
         ]

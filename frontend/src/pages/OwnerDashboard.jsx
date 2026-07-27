@@ -25,8 +25,8 @@ export default function OwnerDashboard() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
+  async function load() {
+    try {
       const [hostelsRes, roomsRes, bedsRes, summaryRes] = await Promise.all([
         client.get("/hostels/"),
         client.get("/rooms/"),
@@ -38,12 +38,22 @@ export default function OwnerDashboard() {
       setRooms(roomsRes.data.results ?? roomsRes.data);
       setBeds(bedsRes.data.results ?? bedsRes.data);
       setSummary(summaryRes.data);
+    } finally {
       setLoading(false);
     }
+  }
 
+    useEffect(() => {
     load();
-  }, []);
 
+    const refresh = () => load();
+
+    window.addEventListener("dashboard-refresh", refresh);
+
+    return () => {
+      window.removeEventListener("dashboard-refresh", refresh);
+    };
+  }, []);
   const vacantBeds = beds.filter((b) => b.status === "VACANT").length;
   const occupiedBeds = beds.filter((b) => b.status === "OCCUPIED").length;
 

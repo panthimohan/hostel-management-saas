@@ -8,6 +8,7 @@ import KeyTag from "../components/KeyTag";
 import Layout from "../components/Layout";
 
 
+
 const EMPTY_ROOM = {
   id: null,
   hostel: "",
@@ -19,6 +20,7 @@ const EMPTY_ROOM = {
 };
 
 
+
 const EMPTY_BED = {
   id: null,
   room: "",
@@ -27,227 +29,208 @@ const EMPTY_BED = {
 
 
 
-export default function RoomsPage() {
 
 
-  const [tab,setTab] = useState("rooms");
+export default function RoomsPage(){
 
 
-  const [hostels,setHostels] = useState([]);
-  const [rooms,setRooms] = useState([]);
-  const [beds,setBeds] = useState([]);
 
+const [tab,setTab] = useState("rooms");
 
-  const [loading,setLoading] = useState(true);
 
+const [hostels,setHostels] = useState([]);
 
-  const [drawerOpen,setDrawerOpen] = useState(false);
+const [rooms,setRooms] = useState([]);
 
+const [beds,setBeds] = useState([]);
 
-  const [roomForm,setRoomForm] = useState(EMPTY_ROOM);
-  const [bedForm,setBedForm] = useState(EMPTY_BED);
 
 
-  const [error,setError] = useState("");
 
-  const [submitting,setSubmitting] = useState(false);
+const [loading,setLoading] = useState(true);
 
 
+const [drawerOpen,setDrawerOpen] = useState(false);
 
 
 
-  async function load(){
+const [roomForm,setRoomForm] = useState({
+  ...EMPTY_ROOM
+});
 
-    setLoading(true);
 
+const [bedForm,setBedForm] = useState({
+  ...EMPTY_BED
+});
 
-    try{
 
 
-      const [
-        hostelsRes,
-        roomsRes,
-        bedsRes
+const [error,setError] = useState("");
 
-      ] = await Promise.all([
+const [submitting,setSubmitting] = useState(false);
 
-        client.get("/hostels/"),
-        client.get("/rooms/"),
-        client.get("/beds/")
 
-      ]);
 
 
 
-      setHostels(
-        hostelsRes.data.results ?? hostelsRes.data
-      );
 
 
-      setRooms(
-        roomsRes.data.results ?? roomsRes.data
-      );
+async function load(){
 
 
-      setBeds(
-        bedsRes.data.results ?? bedsRes.data
-      );
+setLoading(true);
 
 
 
-    }catch(err){
+try{
 
-      console.error(err);
 
-    }
-    finally{
+const [
+hostelsRes,
+roomsRes,
+bedsRes
 
-      setLoading(false);
+] = await Promise.all([
 
-    }
+client.get("/hostels/"),
 
-  }
+client.get("/rooms/"),
 
+client.get("/beds/")
 
+]);
 
 
 
-  useEffect(()=>{
 
-    load();
 
-  },[]);
+setHostels(
 
+hostelsRes.data.results ??
+hostelsRes.data
 
+);
 
 
 
 
 
-  const hostelName=(id)=>{
+let roomData =
+roomsRes.data.results ??
+roomsRes.data;
 
-    return (
-      hostels.find(
-        h=>h.id===id
-      )?.name || "—"
-    );
 
-  };
 
 
+let bedData =
+bedsRes.data.results ??
+bedsRes.data;
 
 
 
 
-  const roomLabel=(id)=>{
 
 
-    const room = rooms.find(
-      r=>r.id===id
-    );
 
+// sort rooms numerically
 
-    return room
-      ? `Room ${room.room_number}`
-      : "—";
+roomData.sort(
 
-  };
+(a,b)=>
 
+a.room_number.localeCompare(
 
+b.room_number,
 
+undefined,
 
+{
+numeric:true
+}
 
+)
 
+);
 
-  function roomOccupancy(roomId){
 
 
-    const roomBeds = beds.filter(
-      b=>b.room===roomId
-    );
 
 
-    const occupied = roomBeds.filter(
-      b=>b.status==="OCCUPIED"
-    ).length;
 
 
-    return {
+// sort beds room wise
 
-      occupied,
+bedData.sort(
 
-      vacant:
-        Math.max(
-          0,
-          roomBeds.length - occupied
-        )
+(a,b)=>{
 
-    };
 
-  }
+if(a.room !== b.room){
 
+return a.room - b.room;
 
+}
 
 
+return a.bed_number.localeCompare(
 
+b.bed_number,
 
+undefined,
 
+{
+numeric:true
+}
 
+);
 
-  function openAdd(){
 
-    setError("");
+}
 
-    if(tab==="rooms"){
+);
 
-      setRoomForm(EMPTY_ROOM);
 
-    }else{
 
-      setBedForm(EMPTY_BED);
 
-    }
 
+setRooms(roomData);
 
-    setDrawerOpen(true);
+setBeds(bedData);
 
-  }
 
 
 
+}
 
+catch(err){
 
+console.log(err);
 
+}
 
-  function editRoom(room){
 
+finally{
 
-    setError("");
+setLoading(false);
 
+}
 
-    setRoomForm({
 
-      id:room.id,
+}
 
-      hostel:room.hostel,
 
-      room_number:room.room_number,
 
-      floor:room.floor,
 
-      capacity:room.capacity,
 
-      room_type:room.room_type,
 
-      price:room.price
 
-    });
 
+useEffect(()=>{
 
-    setDrawerOpen(true);
+load();
 
+},[]);
 
-  }
 
 
 
@@ -256,116 +239,113 @@ export default function RoomsPage() {
 
 
 
-  function editBed(bed){
+function hostelName(id){
 
 
-    setError("");
+return (
 
+hostels.find(
 
-    setBedForm({
+h=>h.id===id
 
-      id:bed.id,
+)?.name ||
 
-      room:bed.room,
+"—"
 
-      bed_number:bed.bed_number
+);
 
-    });
 
+}
 
-    setDrawerOpen(true);
 
 
-  }
 
 
 
 
 
 
+function roomLabel(id){
 
 
+const room = rooms.find(
 
+r=>r.id===id
 
-  async function submitRoom(e){
+);
 
-    e.preventDefault();
 
 
-    setError("");
+return room
 
-    setSubmitting(true);
+?
 
+`Room ${room.room_number}`
 
+:
 
-    try{
+"—";
 
 
-      if(roomForm.id){
+}
 
 
-        await client.patch(
 
-          `/rooms/${roomForm.id}/`,
 
-          roomForm
 
-        );
 
 
-      }else{
 
 
-        await client.post(
+function roomStats(roomId){
 
-          "/rooms/",
 
-          roomForm
+const roomBeds = beds.filter(
 
-        );
+b=>b.room===roomId
 
+);
 
-      }
 
 
+const occupied = roomBeds.filter(
 
-      setDrawerOpen(false);
+b=>
 
-      setRoomForm(EMPTY_ROOM);
+b.status==="OCCUPIED"
 
+).length;
 
-      await load();
 
 
 
-    }catch(err){
 
+return {
 
-      const data=err.response?.data;
 
+capacity:
 
-      setError(
+roomBeds.length,
 
-        data
 
-        ? Object.values(data).flat()[0]
+occupied,
 
-        : "Unable to save room"
 
-      );
+vacant:
 
+Math.max(
 
-    }
-    finally{
+0,
 
-      setSubmitting(false);
+roomBeds.length - occupied
 
-    }
+)
 
 
-  }
+};
 
 
+}
 
 
 
@@ -373,173 +353,347 @@ export default function RoomsPage() {
 
 
 
-  async function submitBed(e){
 
-    e.preventDefault();
 
+function openAdd(){
 
-    setError("");
 
-    setSubmitting(true);
+setError("");
 
 
 
-    try{
+if(tab==="rooms"){
 
 
-      if(bedForm.id){
+setRoomForm({
 
+...EMPTY_ROOM
 
-        await client.patch(
+});
 
-          `/beds/${bedForm.id}/`,
 
-          bedForm
+}
 
-        );
+else{
 
 
-      }else{
+setBedForm({
 
+...EMPTY_BED
 
-        await client.post(
+});
 
-          "/beds/",
 
-          bedForm
+}
 
-        );
 
 
-      }
+setDrawerOpen(true);
 
 
+}
 
-      setDrawerOpen(false);
 
-      setBedForm(EMPTY_BED);
 
 
-      await load();
 
 
 
-    }catch(err){
 
 
-      const data=err.response?.data;
+function editRoom(room){
 
 
-      setError(
 
-        data
+setError("");
 
-        ? Object.values(data).flat()[0]
 
-        : "Unable to save bed"
 
-      );
+setRoomForm({
 
+id:room.id,
 
-    }
-    finally{
+hostel:room.hostel,
 
-      setSubmitting(false);
+room_number:room.room_number,
 
-    }
+floor:room.floor,
 
+capacity:room.capacity,
 
-  }
+room_type:room.room_type,
 
+price:room.price
 
 
+});
 
 
 
+setDrawerOpen(true);
 
 
+}
 
-  async function deleteRoom(id){
 
 
-    if(!window.confirm("Delete this room?")) return;
 
 
 
-    try{
 
 
-      await client.delete(
 
-        `/rooms/${id}/`
+function editBed(bed){
 
-      );
 
 
-      await load();
+setError("");
 
 
-    }catch(err){
 
+setBedForm({
 
-      alert(
+id:bed.id,
 
-        err.response?.data?.detail ||
+room:bed.room,
 
-        "Cannot delete room"
+bed_number:bed.bed_number
 
-      );
+});
 
-    }
 
-  }
 
+setDrawerOpen(true);
 
 
+}
 
 
 
 
 
-  async function deleteBed(id){
 
 
-    if(!window.confirm("Delete this bed?")) return;
 
 
+async function submitRoom(e){
 
-    try{
 
+e.preventDefault();
 
-      await client.delete(
 
-        `/beds/${id}/`
+setSubmitting(true);
 
-      );
+setError("");
 
 
-      await load();
 
+try{
 
-    }catch(err){
 
 
-      alert(
+if(roomForm.id){
 
-        err.response?.data?.detail ||
 
-        "Cannot delete bed"
+await client.patch(
 
-      );
+`/rooms/${roomForm.id}/`,
 
-    }
+roomForm
 
-  }return (
+);
+
+
+}
+
+else{
+
+
+await client.post(
+
+"/rooms/",
+
+roomForm
+
+);
+
+
+}
+
+
+
+
+
+setDrawerOpen(false);
+
+
+
+setRoomForm({
+
+...EMPTY_ROOM
+
+});
+
+
+
+await load();
+
+
+
+}
+
+catch(err){
+
+
+const data = err.response?.data;
+
+
+
+setError(
+
+data
+
+?
+
+Object.values(data).flat()[0]
+
+:
+
+"Unable to save room"
+
+);
+
+
+}
+
+
+finally{
+
+
+setSubmitting(false);
+
+
+}
+
+
+}
+
+
+
+
+
+
+
+
+
+async function submitBed(e){
+
+
+e.preventDefault();
+
+
+setSubmitting(true);
+
+setError("");
+
+
+
+try{
+
+
+
+if(bedForm.id){
+
+
+await client.patch(
+
+`/beds/${bedForm.id}/`,
+
+bedForm
+
+);
+
+
+}
+
+else{
+
+
+await client.post(
+
+"/beds/",
+
+bedForm
+
+);
+
+
+}
+
+
+
+
+
+setDrawerOpen(false);
+
+
+
+setBedForm({
+
+...EMPTY_BED
+
+});
+
+
+
+await load();
+
+
+
+}
+
+catch(err){
+
+
+const data = err.response?.data;
+
+
+
+setError(
+
+data
+
+?
+
+Object.values(data).flat()[0]
+
+:
+
+"Unable to save bed"
+
+);
+
+
+}
+
+
+finally{
+
+
+setSubmitting(false);
+
+
+}
+
+
+}
+return (
 
 <Layout>
 
 
 <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+
 
 <div>
 
@@ -547,16 +701,23 @@ export default function RoomsPage() {
 Rooms &amp; Beds
 </h1>
 
+
 <p className="text-sm text-ink-soft mt-1">
 Manage rooms, beds and occupancy.
 </p>
 
+
 </div>
 
 
+
+
 <button
+
 onClick={openAdd}
+
 className="btn-primary shrink-0"
+
 >
 
 <Plus size={18}/>
@@ -566,7 +727,11 @@ Add {tab==="rooms" ? "room" : "bed"}
 </button>
 
 
+
 </div>
+
+
+
 
 
 
@@ -578,17 +743,30 @@ Add {tab==="rooms" ? "room" : "bed"}
 {
 ["rooms","beds"].map(t=>(
 
+
 <button
 
 key={t}
 
 onClick={()=>setTab(t)}
 
-className={`px-4 py-2 rounded-full text-sm font-semibold capitalize ${
+className={`
+px-4 py-2 rounded-full text-sm font-semibold capitalize
+
+${
 tab===t
-?"bg-primary text-white"
-:"bg-surface border border-border text-ink-soft"
-}`}
+
+?
+
+"bg-primary text-white"
+
+:
+
+"bg-surface border border-border text-ink-soft"
+
+}
+
+`}
 
 >
 
@@ -596,7 +774,9 @@ tab===t
 
 </button>
 
+
 ))
+
 }
 
 
@@ -606,8 +786,13 @@ tab===t
 
 
 
+
+
+
+
 {
-loading ? (
+loading ?
+
 
 <div className="card p-10 text-center">
 
@@ -616,209 +801,124 @@ Loading...
 </div>
 
 
-)
 
 :
 
 
-tab==="rooms" ? (
+
+
+tab==="rooms"
+
+?
+
+
+
 
 
 <DataTable
 
 
-emptyLabel="No rooms yet. Add one."
+emptyLabel="No rooms available."
 
-
-columns={[
-
-
-{
-key:"room_number",
-header:"Room Number",
-mono:true
-},
-
-
-{
-key:"hostel",
-header:"Hostel",
-render:(r)=>hostelName(r.hostel)
-},
-
-
-{
-key:"room_type",
-header:"Type"
-},
-
-
-{
-key:"capacity",
-header:"Capacity",
-mono:true
-},
-
-
-{
-key:"occupied",
-header:"Occupied",
-
-render:(r)=>{
-
-const data=roomOccupancy(r.id);
-
-return `${data.occupied}/${r.capacity}`;
-
-}
-
-},
-
-
-
-{
-key:"vacant",
-header:"Vacant",
-
-render:(r)=>{
-
-const data=roomOccupancy(r.id);
-
-return data.vacant;
-
-}
-
-},
-
-
-
-{
-key:"price",
-header:"Price",
-
-render:(r)=>`$${r.price}`
-
-},
-
-
-
-{
-key:"status",
-header:"Status",
-
-render:(r)=>
-<KeyTag status={r.status}/>
-
-},
-
-
-
-
-{
-key:"actions",
-
-header:"Actions",
-
-render:(r)=>(
-
-<div className="flex gap-3">
-
-
-<button
-
-onClick={()=>editRoom(r)}
-
-className="text-primary hover:underline flex items-center gap-1"
-
->
-
-<Pencil size={15}/>
-
-Edit
-
-</button>
-
-
-
-<button
-
-onClick={()=>deleteRoom(r.id)}
-
-className="text-red-600 hover:underline flex items-center gap-1"
-
->
-
-<Trash2 size={15}/>
-
-Delete
-
-</button>
-
-
-
-</div>
-
-)
-
-}
-
-
-]}
 
 
 rows={rooms}
 
 
-/>
-
-
-
-)
-
-:
-
-(
-
-
-<DataTable
-
-
-emptyLabel="No beds yet. Add one."
-
 
 columns={[
 
 
 
 {
-key:"bed_number",
-header:"Bed Number",
-mono:true
-},
-
-
-
-{
-key:"room",
+key:"room_number",
 
 header:"Room",
 
-render:(r)=>
-roomLabel(r.room)
+mono:true
 
 },
+
+
 
 
 
 {
-key:"status",
+key:"hostel",
 
-header:"Status",
+header:"Hostel",
 
-render:(r)=>
-<KeyTag status={r.status}/>
+render:(room)=>
+
+hostelName(room.hostel)
 
 },
+
+
+
+
+
+{
+key:"room_type",
+
+header:"Type"
+
+},
+
+
+
+
+
+{
+key:"capacity",
+
+header:"Capacity",
+
+render:(room)=>
+
+room.capacity
+
+},
+
+
+
+
+
+{
+key:"vacant",
+
+header:"Available Beds",
+
+render:(room)=>{
+
+
+const stats =
+roomStats(room.id);
+
+
+
+return stats.vacant;
+
+
+}
+
+},
+
+
+
+
+
+{
+key:"price",
+
+header:"Monthly Rent",
+
+render:(room)=>
+
+`Rs ${room.price}`
+
+},
+
 
 
 
@@ -828,16 +928,21 @@ key:"actions",
 
 header:"Actions",
 
-render:(r)=>(
+
+render:(room)=>(
+
 
 <div className="flex gap-3">
 
 
+
+
+
 <button
 
-onClick={()=>editBed(r)}
+onClick={()=>editRoom(room)}
 
-className="text-primary hover:underline flex items-center gap-1"
+className="text-primary flex items-center gap-1"
 
 >
 
@@ -850,11 +955,14 @@ Edit
 
 
 
+
+
+
 <button
 
-onClick={()=>deleteBed(r.id)}
+onClick={()=>deleteRoom(room.id)}
 
-className="text-red-600 hover:underline flex items-center gap-1"
+className="text-red-600 flex items-center gap-1"
 
 >
 
@@ -865,7 +973,11 @@ Delete
 </button>
 
 
+
+
+
 </div>
+
 
 )
 
@@ -877,25 +989,368 @@ Delete
 ]}
 
 
-rows={beds}
-
-
 />
+
+
+
+
+
+
+
+:
+
+
+
+
+
+<div className="space-y-5">
+
+
+{
+
+
+rooms.length===0 &&
+
+
+<div className="card p-8 text-center text-ink-soft">
+
+No rooms created yet.
+
+</div>
+
+
+
+}
+
+
+
+
+
+
+{
+
+
+rooms.map(room=>{
+
+
+const roomBeds = beds.filter(
+
+b=>b.room===room.id
+
+);
+
+
+
+return (
+
+
+
+<div
+
+key={room.id}
+
+className="card overflow-hidden"
+
+>
+
+
+
+
+
+<div
+
+className="
+px-5
+py-4
+bg-surface
+border-b
+border-border
+flex
+justify-between
+items-center
+"
+
+
+>
+
+
+<div>
+
+
+<h2 className="font-semibold">
+
+Room {room.room_number}
+
+</h2>
+
+
+
+<p className="text-sm text-ink-soft">
+
+{hostelName(room.hostel)}
+
+{" • "}
+
+{room.room_type}
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+<div className="text-sm text-ink-soft">
+
+{roomBeds.length}
+
+Beds
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<table className="w-full text-sm">
+
+
+<thead>
+
+
+<tr className="border-b border-border">
+
+
+<th className="text-left p-4">
+
+Bed
+
+</th>
+
+
+<th className="text-left p-4">
+
+Status
+
+</th>
+
+
+<th className="text-left p-4">
+
+Actions
+
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+
+
+
+
+<tbody>
+
+
+
+{
+
+
+roomBeds.length===0
+
+?
+
+<tr>
+
+<td
+
+colSpan="3"
+
+className="p-5 text-center text-ink-soft"
+
+>
+
+No beds added.
+
+</td>
+
+</tr>
+
+
+:
+
+
+
+
+
+
+roomBeds.map(bed=>(
+
+
+<tr
+
+key={bed.id}
+
+className="border-b border-border"
+
+>
+
+
+<td className="p-4 font-medium">
+
+{bed.bed_number}
+
+</td>
+
+
+
+
+
+<td className="p-4">
+
+<KeyTag status={bed.status}/>
+
+</td>
+
+
+
+
+
+<td className="p-4">
+
+
+<div className="flex gap-3">
+
+
+
+
+
+<button
+
+onClick={()=>editBed(bed)}
+
+className="text-primary flex items-center gap-1"
+
+>
+
+
+<Pencil size={15}/>
+
+
+Edit
+
+
+</button>
+
+
+
+
+
+
+
+<button
+
+onClick={()=>deleteBed(bed.id)}
+
+className="text-red-600 flex items-center gap-1"
+
+>
+
+
+<Trash2 size={15}/>
+
+
+Delete
+
+
+</button>
+
+
+
+
+
+</div>
+
+
+
+</td>
+
+
+
+</tr>
+
+
+))
+
+
+}
+
+
+
+
+
+</tbody>
+
+
+
+
+</table>
+
+
+
+
+
+</div>
 
 
 )
 
 
-}<FormDrawer
+})
+
+
+}
+
+
+
+</div>
+
+
+
+
+}
+<FormDrawer
 
 open={drawerOpen}
 
 title={
+
 tab==="rooms"
+
 ?
+
 (roomForm.id ? "Edit Room" : "Add Room")
+
 :
+
 (bedForm.id ? "Edit Bed" : "Add Bed")
+
 }
 
 onClose={()=>setDrawerOpen(false)}
@@ -904,8 +1359,15 @@ onClose={()=>setDrawerOpen(false)}
 
 
 
+
+
 {
-tab==="rooms" ? (
+
+tab==="rooms"
+
+?
+
+
 
 
 <form
@@ -921,38 +1383,51 @@ className="space-y-4"
 <div>
 
 <label className="label">
+
 Hostel
+
 </label>
 
 
 <select
 
-required
-
 className="input"
+
+required
 
 value={roomForm.hostel}
 
-onChange={
-e=>
+onChange={e=>
+
 setRoomForm(
+
 f=>({
+
 ...f,
+
 hostel:e.target.value
+
 })
+
 )
+
 }
 
 >
 
 
 <option value="">
+
 Select hostel
+
 </option>
 
 
+
 {
+
 hostels.map(h=>(
+
 
 <option
 
@@ -966,8 +1441,11 @@ value={h.id}
 
 </option>
 
+
 ))
+
 }
+
 
 
 </select>
@@ -981,76 +1459,48 @@ value={h.id}
 
 
 
-<div className="grid grid-cols-2 gap-3">
-
 
 <div>
 
 <label className="label">
+
 Room Number
+
 </label>
 
 
 <input
+
+className="input"
 
 required
 
-className="input"
+placeholder="101A"
 
 value={roomForm.room_number}
 
-onChange={
-e=>
+onChange={e=>
+
 setRoomForm(
+
 f=>({
+
 ...f,
+
 room_number:e.target.value
+
 })
+
 )
+
 }
+
 
 />
 
 
 </div>
 
-
-
-
-
-<div>
-
-<label className="label">
-Floor
-</label>
-
-
-<input
-
-type="number"
-
-className="input"
-
-value={roomForm.floor}
-
-onChange={
-e=>
-setRoomForm(
-f=>({
-...f,
-floor:e.target.value
-})
-)
-}
-
-/>
-
-
-</div>
-
-
-
-</div>
 
 
 
@@ -1064,8 +1514,11 @@ floor:e.target.value
 <div>
 
 <label className="label">
-Type
+
+Room Type
+
 </label>
+
 
 
 <select
@@ -1074,36 +1527,50 @@ className="input"
 
 value={roomForm.room_type}
 
-onChange={
-e=>
+onChange={e=>
+
 setRoomForm(
+
 f=>({
+
 ...f,
+
 room_type:e.target.value
+
 })
+
 )
+
 }
 
 >
 
 
 <option value="SINGLE">
+
 Single
+
 </option>
 
 
 <option value="DOUBLE">
+
 Double
+
 </option>
 
 
 <option value="DORMITORY">
+
 Dormitory
+
 </option>
 
 
 <option value="SUITE">
+
 Suite
+
 </option>
 
 
@@ -1117,11 +1584,16 @@ Suite
 
 
 
+
+
 <div>
 
 <label className="label">
+
 Capacity
+
 </label>
+
 
 
 <input
@@ -1130,21 +1602,26 @@ type="number"
 
 min="1"
 
-required
-
 className="input"
 
 value={roomForm.capacity}
 
-onChange={
-e=>
+onChange={e=>
+
 setRoomForm(
+
 f=>({
+
 ...f,
+
 capacity:e.target.value
+
 })
+
 )
+
 }
+
 
 />
 
@@ -1152,8 +1629,8 @@ capacity:e.target.value
 </div>
 
 
-
 </div>
+
 
 
 
@@ -1165,7 +1642,9 @@ capacity:e.target.value
 
 
 <label className="label">
-Price per bed / month
+
+Monthly Rent
+
 </label>
 
 
@@ -1173,23 +1652,28 @@ Price per bed / month
 
 type="number"
 
-step="0.01"
+className="input"
 
 required
 
-className="input"
-
 value={roomForm.price}
 
-onChange={
-e=>
+onChange={e=>
+
 setRoomForm(
+
 f=>({
+
 ...f,
+
 price:e.target.value
+
 })
+
 )
+
 }
+
 
 />
 
@@ -1203,15 +1687,20 @@ price:e.target.value
 
 
 {
+
 error &&
 
-<p className="text-sm text-clay bg-clay-light rounded-lg px-3 py-2.5">
+
+<p className="text-sm text-clay bg-clay-light rounded-lg px-3 py-2">
 
 {error}
 
 </p>
 
+
 }
+
+
 
 
 
@@ -1221,14 +1710,15 @@ error &&
 
 <button
 
-disabled={submitting}
-
 className="btn-primary w-full"
+
+disabled={submitting}
 
 >
 
 
 {
+
 submitting
 
 ?
@@ -1250,6 +1740,7 @@ roomForm.id
 }
 
 
+
 </button>
 
 
@@ -1259,11 +1750,12 @@ roomForm.id
 
 
 
-)
 
 :
 
-(
+
+
+
 
 
 
@@ -1277,58 +1769,74 @@ className="space-y-4"
 
 
 
+
 <div>
 
+
 <label className="label">
+
 Room
+
 </label>
+
 
 
 <select
 
-required
-
 className="input"
+
+required
 
 value={bedForm.room}
 
-onChange={
-e=>
+onChange={e=>
+
 setBedForm(
+
 f=>({
+
 ...f,
+
 room:e.target.value
+
 })
+
 )
+
 }
 
 >
 
 
 <option value="">
-Select room
+
+Select Room
+
 </option>
 
 
 
+
 {
-rooms.map(r=>(
+
+rooms.map(room=>(
 
 
 <option
 
-key={r.id}
+key={room.id}
 
-value={r.id}
+value={room.id}
 
 >
 
 
-Room {r.room_number}
+Room {room.room_number}
 
-{" — "}
+{" - "}
 
-{hostelName(r.hostel)}
+{hostelName(room.hostel)}
+
 
 
 </option>
@@ -1336,7 +1844,9 @@ Room {r.room_number}
 
 ))
 
+
 }
+
 
 
 </select>
@@ -1350,32 +1860,44 @@ Room {r.room_number}
 
 
 
+
+
 <div>
 
+
 <label className="label">
+
 Bed Number
+
 </label>
 
 
 <input
 
+className="input"
+
 required
 
-className="input"
+placeholder="A1"
 
 value={bedForm.bed_number}
 
-onChange={
-e=>
+onChange={e=>
+
 setBedForm(
+
 f=>({
+
 ...f,
+
 bed_number:e.target.value
+
 })
+
 )
+
 }
 
-placeholder="A1"
 
 />
 
@@ -1388,14 +1910,18 @@ placeholder="A1"
 
 
 
+
 {
+
 error &&
 
-<p className="text-sm text-clay bg-clay-light rounded-lg px-3 py-2.5">
+
+<p className="text-sm text-clay bg-clay-light rounded-lg px-3 py-2">
 
 {error}
 
 </p>
+
 
 }
 
@@ -1405,16 +1931,19 @@ error &&
 
 
 
+
+
 <button
 
-disabled={submitting}
-
 className="btn-primary w-full"
+
+disabled={submitting}
 
 >
 
 
 {
+
 submitting
 
 ?
@@ -1436,16 +1965,20 @@ bedForm.id
 }
 
 
+
 </button>
+
 
 
 
 </form>
 
 
-)
+
+
 
 }
+
 
 
 </FormDrawer>
@@ -1455,4 +1988,5 @@ bedForm.id
 </Layout>
 
 );
+
 }

@@ -5,7 +5,9 @@ from .models import (
     RentInvoice,
     PaymentQR,
     PaymentSubmission,
+    PaymentMethod,
 )
+
 
 
 class RentInvoiceSerializer(serializers.ModelSerializer):
@@ -73,6 +75,7 @@ class RentInvoiceSerializer(serializers.ModelSerializer):
 
 
 
+# keep everything above RentInvoiceSerializer the same
 
 
 class PaymentQRSerializer(serializers.ModelSerializer):
@@ -114,6 +117,7 @@ class PaymentQRSerializer(serializers.ModelSerializer):
 
         ]
 
+
         read_only_fields = [
 
             "id",
@@ -123,8 +127,7 @@ class PaymentQRSerializer(serializers.ModelSerializer):
         ]
 
 
-
-    def get_qr_image_url(self,obj):
+    def get_qr_image_url(self, obj):
 
         request = self.context.get("request")
 
@@ -141,10 +144,51 @@ class PaymentQRSerializer(serializers.ModelSerializer):
 
 
 
-
-
-
 class PaymentSerializer(serializers.ModelSerializer):
+
+
+    invoice_number = serializers.CharField(
+        source="invoice.invoice_number",
+        read_only=True
+    )
+
+
+    tenant_name = serializers.SerializerMethodField()
+
+
+    tenant_email = serializers.EmailField(
+        source="invoice.bed_allocation.tenant.email",
+        read_only=True
+    )
+
+
+    tenant_phone = serializers.CharField(
+        source="invoice.bed_allocation.tenant.phone",
+        read_only=True
+    )
+
+
+    room_number = serializers.CharField(
+        source="invoice.bed_allocation.bed.room.room_number",
+        read_only=True
+    )
+
+
+    bed_number = serializers.CharField(
+        source="invoice.bed_allocation.bed.bed_number",
+        read_only=True
+    )
+
+
+
+    def get_tenant_name(self, obj):
+
+        tenant = obj.invoice.bed_allocation.tenant
+
+        name = f"{tenant.first_name} {tenant.last_name}".strip()
+
+        return name if name else tenant.email
+
 
 
     class Meta:
@@ -155,7 +199,18 @@ class PaymentSerializer(serializers.ModelSerializer):
 
             "id",
 
+            "receipt_number",
+
             "invoice",
+
+            "invoice_number",
+
+            "tenant_name",
+            "tenant_email",
+            "tenant_phone",
+
+            "room_number",
+            "bed_number",
 
             "amount",
 
@@ -175,10 +230,24 @@ class PaymentSerializer(serializers.ModelSerializer):
 
         ]
 
+
         read_only_fields = [
 
             "id",
+
+            "receipt_number",
+
+            "invoice_number",
+
+            "tenant_name",
+            "tenant_email",
+            "tenant_phone",
+
+            "room_number",
+            "bed_number",
+
             "recorded_by",
+
             "created_at",
 
         ]
@@ -270,3 +339,36 @@ class PaymentSubmissionSerializer(serializers.ModelSerializer):
             "created_at",
 
         ]
+
+
+
+
+
+class ManualPaymentSerializer(serializers.Serializer):
+
+    amount = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+
+    method = serializers.ChoiceField(
+        choices=PaymentMethod.choices
+    )
+
+
+    paid_on = serializers.DateField(
+        required=False
+    )
+
+
+    reference_number = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )
+
+
+    notes = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )

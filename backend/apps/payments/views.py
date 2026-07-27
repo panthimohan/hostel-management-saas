@@ -1,11 +1,12 @@
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import Sum
+from datetime import date
 
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
 
 
 from permissions.roles import (
@@ -29,8 +30,11 @@ from .serializers import (
     RentInvoiceSerializer,
     PaymentQRSerializer,
     PaymentSubmissionSerializer,
+    ManualPaymentSerializer,
 )
 
+
+from .services import record_manual_payment
 
 
 
@@ -51,7 +55,6 @@ class RentInvoiceViewSet(viewsets.ModelViewSet):
 
         user = self.request.user
 
-
         qs = RentInvoice.objects.select_related(
             "bed_allocation",
             "bed_allocation__tenant",
@@ -63,7 +66,6 @@ class RentInvoiceViewSet(viewsets.ModelViewSet):
 
 
         if user.role == "TENANT":
-
             return qs.filter(
                 bed_allocation__tenant=user
             )
@@ -75,7 +77,77 @@ class RentInvoiceViewSet(viewsets.ModelViewSet):
 
 
 
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="record-payment"
+    )
+    def record_payment(self, request, pk=None):
 
+        invoice = self.get_object()
+
+
+        serializer = ManualPaymentSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+
+        data = serializer.validated_data
+
+
+        payment = record_manual_payment(
+
+            invoice=invoice,
+
+            organization=invoice.organization,
+
+            amount=data["amount"],
+
+            method=data["method"],
+
+            paid_on=data.get(
+                "paid_on",
+                timezone.now().date()
+            ),
+
+            recorded_by=request.user,
+
+            reference_number=data.get(
+                "reference_number",
+                ""
+            ),
+
+            notes=data.get(
+                "notes",
+                ""
+            ),
+        )
+
+
+        return Response(
+            {
+                "message": "Payment recorded successfully",
+
+                "payment_id": payment.id,
+
+                "receipt_number": payment.receipt_number,
+
+                "amount": payment.amount,
+
+                "method": payment.method,
+
+                "paid_on": payment.paid_on,
+
+                "invoice_id": invoice.id,
+
+                "invoice_status": invoice.status,
+            },
+            status=status.HTTP_201_CREATED
+        )
 
 
 
@@ -83,15 +155,19 @@ class RentInvoiceViewSet(viewsets.ModelViewSet):
 
 class PaymentViewSet(viewsets.ModelViewSet):
 
+    queryset = Payment.objects.all()
+
     serializer_class = PaymentSerializer
 
 
-    permission_classes = [
-        IsAuthenticated,
-        IsPaymentViewer,
-        OrganizationIsActive,
-        BelongsToSameOrganization,
-    ]
+    def perform_create(self, serializer):
+
+        user = self.request.user
+
+        serializer.save(
+            recorded_by=user,
+            organization=user.organization
+        )
 
 
 
@@ -103,16 +179,16 @@ class PaymentViewSet(viewsets.ModelViewSet):
         qs = Payment.objects.select_related(
             "invoice",
             "payment_qr",
+        ).order_by(
+            "-created_at"
         )
 
 
-        if user.is_superuser or user.role=="SUPER_ADMIN":
-
+        if user.is_superuser or user.role == "SUPER_ADMIN":
             return qs
 
 
-
-        if user.role=="TENANT":
+        if user.role == "TENANT":
 
             return qs.filter(
                 invoice__bed_allocation__tenant=user
@@ -125,69 +201,83 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
 
 
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="dashboard-summary"
+    )
+    def dashboard_summary(self, request):
+
+        user = request.user
 
 
-
-    def perform_create(self,serializer):
-
-        payment = serializer.save(
-
-            organization=self.request.user.organization,
-
-            recorded_by=self.request.user
-
+        invoices = RentInvoice.objects.filter(
+            organization_id=user.organization_id
         )
 
 
-        payment.invoice.refresh_status()
+        payments = Payment.objects.filter(
+            organization_id=user.organization_id
+        )
 
 
+        total_due = invoices.aggregate(
+            total=Sum("total_amount")
+        )["total"] or 0
 
 
+        collected = payments.aggregate(
+            total=Sum("amount")
+        )["total"] or 0
 
 
+        pending = invoices.exclude(
+            status="PAID"
+        ).aggregate(
+            total=Sum("outstanding_balance")
+        )["total"] or 0
 
 
+        start_month = date.today().replace(
+            day=1
+        )
 
 
-
+        this_month = payments.filter(
+            paid_on__gte=start_month
+        ).aggregate(
+            total=Sum("amount")
+        )["total"] or 0
 class PaymentQRViewSet(viewsets.ModelViewSet):
+
     serializer_class = PaymentQRSerializer
 
-
     permission_classes = [
-
         IsAuthenticated,
         IsPaymentViewer,
         OrganizationIsActive,
         BelongsToSameOrganization,
-
     ]
-
 
 
     def get_queryset(self):
 
         user = self.request.user
 
-
         qs = PaymentQR.objects.select_related(
             "hostel"
         ).filter(
             is_active=True
+        ).order_by(
+            "-created_at"
         )
 
 
-
-        # TENANT
-        # show QR belonging to his hostel
-
-        if user.role=="TENANT":
+        if user.role == "TENANT":
 
             return qs.filter(
                 hostel__rooms__beds__allocations__tenant=user
             ).distinct()
-
 
 
         return qs.filter(
@@ -196,18 +286,11 @@ class PaymentQRViewSet(viewsets.ModelViewSet):
 
 
 
-
-
-
-    def perform_create(self,serializer):
+    def perform_create(self, serializer):
 
         serializer.save(
             organization=self.request.user.organization
         )
-
-
-
-
 
 
 
@@ -225,7 +308,6 @@ class PaymentSubmissionViewSet(viewsets.ModelViewSet):
     permission_classes = [
 
         IsAuthenticated,
-
         OrganizationIsActive,
 
     ]
@@ -234,17 +316,19 @@ class PaymentSubmissionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
 
-        user=self.request.user
+        user = self.request.user
 
 
         qs = PaymentSubmission.objects.select_related(
             "invoice",
             "tenant",
             "payment_qr",
+        ).order_by(
+            "-created_at"
         )
 
 
-        if user.role=="TENANT":
+        if user.role == "TENANT":
 
             return qs.filter(
                 tenant=user
@@ -258,10 +342,7 @@ class PaymentSubmissionViewSet(viewsets.ModelViewSet):
 
 
 
-
-
-    def perform_create(self,serializer):
-
+    def perform_create(self, serializer):
 
         serializer.save(
 
@@ -276,19 +357,14 @@ class PaymentSubmissionViewSet(viewsets.ModelViewSet):
 
 
 
-
-
-
     @transaction.atomic
     @action(
         detail=True,
         methods=["post"]
     )
-    def approve(self,request,pk=None):
+    def approve(self, request, pk=None):
 
-
-        submission=self.get_object()
-
+        submission = self.get_object()
 
 
         if submission.status != PaymentSubmissionStatus.PENDING:
@@ -303,18 +379,13 @@ class PaymentSubmissionViewSet(viewsets.ModelViewSet):
 
 
 
-        submission.status = (
-            PaymentSubmissionStatus.APPROVED
-        )
+        submission.status = PaymentSubmissionStatus.APPROVED
 
+        submission.verified_by = request.user
 
-        submission.verified_by=request.user
-
-        submission.verified_at=timezone.now()
+        submission.verified_at = timezone.now()
 
         submission.save()
-
-
 
 
 
@@ -368,23 +439,17 @@ class PaymentSubmissionViewSet(viewsets.ModelViewSet):
 
 
 
-
-
-
     @action(
         detail=True,
         methods=["post"]
     )
-    def reject(self,request,pk=None):
+    def reject(self, request, pk=None):
+
+        submission = self.get_object()
 
 
-        submission=self.get_object()
 
-
-
-        submission.status = (
-            PaymentSubmissionStatus.REJECTED
-        )
+        submission.status = PaymentSubmissionStatus.REJECTED
 
 
         submission.remarks = request.data.get(
@@ -393,9 +458,9 @@ class PaymentSubmissionViewSet(viewsets.ModelViewSet):
         )
 
 
-        submission.verified_by=request.user
+        submission.verified_by = request.user
 
-        submission.verified_at=timezone.now()
+        submission.verified_at = timezone.now()
 
         submission.save()
 

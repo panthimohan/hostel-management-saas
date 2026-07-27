@@ -13,6 +13,9 @@ import LoginPage from "./pages/LoginPage";
 import TenantLoginPage from "./pages/TenantLoginPage";
 import OwnerSignupPage from "./pages/OwnerSignupPage";
 
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+
 import OwnerDashboard from "./pages/OwnerDashboard";
 import TenantDashboard from "./pages/TenantDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
@@ -56,6 +59,16 @@ return (
 <Route
 path="/login"
 element={<LoginPage />}
+/>
+
+<Route
+    path="/forgot-password"
+    element={<ForgotPasswordPage />}
+/>
+
+<Route
+    path="/reset-password"
+    element={<ResetPasswordPage />}
 />
 
 
