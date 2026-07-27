@@ -1,16 +1,36 @@
 services:
+
   db:
     image: postgres:16-alpine
-    container_name: hostel-db
+    container_name: nestled-db
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: hostel_saas
-      POSTGRES_USER: hostel_saas_user
-      POSTGRES_PASSWORD: devpassword
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+
+  backend:
+    build:
+      context: ./backend
+    container_name: nestled-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
 
 volumes:
   postgres_data:
