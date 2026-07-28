@@ -239,3 +239,6 @@ frontend/dist_backup_*/
 
 # Temporary files
 frontend/axios
+
+# Database backups
+*.sql
