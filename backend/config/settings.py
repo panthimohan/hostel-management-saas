@@ -465,24 +465,15 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
 
-
+    # Local development
     "http://localhost:5173",
-
-
     "http://127.0.0.1:5173",
-
-
     "http://localhost:5174",
-
-
     "http://127.0.0.1:5174",
-
-
-
-    # Local network frontend
-
     "http://192.168.100.2:5173",
 
+    # Production frontend
+    "https://traversedw.com.np",
 ]
 
 
@@ -520,17 +511,16 @@ CORS_ALLOW_HEADERS = [
 
 CSRF_TRUSTED_ORIGINS = [
 
-
+    # Local development
     "http://localhost:5173",
-
-
     "http://127.0.0.1:5173",
-
-
     "http://192.168.100.2:5173",
 
+    # Production frontend
+    "https://traversedw.com.np",
+]
 
-]# -------------------------------------------------
+# -------------------------------------------------
 # Celery
 # -------------------------------------------------
 

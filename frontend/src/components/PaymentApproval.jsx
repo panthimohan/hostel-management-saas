@@ -236,7 +236,7 @@ export default function PaymentApproval(){
 
 
 
-        return `http://localhost:8000${path}`;
+        return `https://traversedw.com.np${path}`;
 
     }
 

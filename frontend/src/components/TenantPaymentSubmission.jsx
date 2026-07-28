@@ -163,7 +163,7 @@ export default function TenantPaymentSubmission({ invoice }) {
             return path;
 
 
-        return `http://localhost:8000${path}`;
+        return `https://traversedw.com.np${path}`;
 
     }
 

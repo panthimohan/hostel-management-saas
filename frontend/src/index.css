@@ -2,90 +2,373 @@
 @tailwind components;
 @tailwind utilities;
 
+
 @layer base {
+
   * {
     @apply border-border;
+    box-sizing: border-box;
   }
+
+
+  html {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+
   body {
+
+    width: 100%;
+    min-height: 100vh;
+
+    margin: 0;
+
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    overflow-x: hidden;
+
+    overscroll-behavior-x: none;
   }
-  h1, h2, h3, h4 {
+
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
+  }
+
+
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-display text-ink;
   }
+
+
   ::selection {
     background-color: theme("colors.brass.light");
   }
+
+
   :focus-visible {
+
     outline: 2px solid theme("colors.primary.DEFAULT");
     outline-offset: 2px;
     border-radius: 4px;
+
   }
+
+
+  button,
+  a {
+
+    -webkit-tap-highlight-color: transparent;
+
+  }
+
 }
+
+
 
 @layer components {
+
+
   /*
-   * Key-tag badge — the app's signature element.
-   * Modeled on a physical hostel room-key fob: a pill shape with a
-   * small punched hole at the left edge. Used for every status
-   * indicator across the app (room/bed status, expense category,
-   * organization status) instead of generic colored dots.
+   * Key-tag badge
    */
+
   .key-tag {
-    @apply relative inline-flex items-center gap-1.5 rounded-full pl-4 pr-3 py-1
-           text-xs font-semibold font-mono tracking-wide uppercase;
-  }
-  .key-tag::before {
-    content: "";
-    @apply absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-fog;
-  }
-  .key-tag--surface::before {
-    @apply bg-surface;
+
+    @apply relative inline-flex items-center gap-1.5 rounded-full
+    pl-4 pr-3 py-1 text-xs font-semibold font-mono
+    tracking-wide uppercase;
+
   }
 
-  .key-tag--available { @apply bg-moss-light text-moss; }
-  .key-tag--occupied { @apply bg-brass/15 text-brass-dark; }
-  .key-tag--reserved { @apply bg-primary/10 text-primary-dark; }
+
+  .key-tag::before {
+
+    content: "";
+
+    @apply absolute left-1.5 top-1/2
+    -translate-y-1/2
+    w-1.5 h-1.5
+    rounded-full
+    bg-fog;
+
+  }
+
+
+  .key-tag--surface::before {
+
+    @apply bg-surface;
+
+  }
+
+
+  .key-tag--available {
+
+    @apply bg-moss-light text-moss;
+
+  }
+
+
+  .key-tag--occupied {
+
+    @apply bg-brass/15 text-brass-dark;
+
+  }
+
+
+  .key-tag--reserved {
+
+    @apply bg-primary/10 text-primary-dark;
+
+  }
+
+
   .key-tag--maintenance,
   .key-tag--closed,
-  .key-tag--full { @apply bg-clay-light text-clay; }
-  .key-tag--pending { @apply bg-brass/15 text-brass-dark; }
-  .key-tag--active { @apply bg-moss-light text-moss; }
+  .key-tag--full {
+
+    @apply bg-clay-light text-clay;
+
+  }
+
+
+  .key-tag--pending {
+
+    @apply bg-brass/15 text-brass-dark;
+
+  }
+
+
+  .key-tag--active {
+
+    @apply bg-moss-light text-moss;
+
+  }
+
+
   .key-tag--suspended,
-  .key-tag--cancelled { @apply bg-clay-light text-clay; }
-  .key-tag--neutral { @apply bg-ink/5 text-ink-soft; }
+  .key-tag--cancelled {
+
+    @apply bg-clay-light text-clay;
+
+  }
+
+
+  .key-tag--neutral {
+
+    @apply bg-ink/5 text-ink-soft;
+
+  }
+
+
+
+
+  /*
+   * Cards
+   */
 
   .card {
-    @apply bg-surface rounded-xl2 border border-border shadow-card;
+
+    @apply bg-surface rounded-xl2
+    border border-border
+    shadow-card;
+
   }
+
+
+
+
+  /*
+   * Buttons
+   */
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5
-           text-sm font-semibold text-white shadow-sm transition-colors
-           hover:bg-primary-dark active:bg-primary-dark disabled:opacity-50 disabled:pointer-events-none;
+
+    @apply inline-flex items-center justify-center gap-2
+    rounded-lg bg-primary
+    px-4 py-2.5
+    text-sm font-semibold
+    text-white shadow-sm
+    transition-colors
+    hover:bg-primary-dark
+    active:bg-primary-dark
+    disabled:opacity-50
+    disabled:pointer-events-none;
+
   }
+
+
+
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5
-           text-sm font-semibold text-ink transition-colors
-           hover:bg-fog disabled:opacity-50 disabled:pointer-events-none;
+
+    @apply inline-flex items-center justify-center gap-2
+    rounded-lg border border-border
+    bg-surface
+    px-4 py-2.5
+    text-sm font-semibold
+    text-ink
+    transition-colors
+    hover:bg-fog
+    disabled:opacity-50
+    disabled:pointer-events-none;
+
   }
+
+
+
+
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-clay px-4 py-2.5
-           text-sm font-semibold text-white shadow-sm transition-colors hover:opacity-90;
+
+    @apply inline-flex items-center justify-center gap-2
+    rounded-lg bg-clay
+    px-4 py-2.5
+    text-sm font-semibold
+    text-white shadow-sm
+    transition-colors
+    hover:opacity-90;
+
   }
+
+
+
+
+  /*
+   * Inputs
+   */
 
   .input {
-    @apply w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-ink
-           placeholder:text-ink-soft/60 focus:border-primary focus:ring-1 focus:ring-primary;
+
+    @apply w-full rounded-lg
+    border border-border
+    bg-surface
+    px-3.5 py-2.5
+    text-sm text-ink
+    placeholder:text-ink-soft/60
+    focus:border-primary
+    focus:ring-1
+    focus:ring-primary;
+
   }
+
+
+
   .label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-soft;
+
+    @apply mb-1.5 block
+    text-xs font-semibold
+    uppercase tracking-wide
+    text-ink-soft;
+
   }
+
+
+
+  /*
+   * Mobile bottom navigation safe area
+   */
+
+  .safe-bottom {
+
+    padding-bottom: env(safe-area-inset-bottom);
+
+  }
+
+
+
+  /*
+   * Prevent mobile table overflow
+   */
+
+  .responsive-scroll {
+
+    @apply overflow-x-auto;
+
+    -webkit-overflow-scrolling: touch;
+
+  }
+
+
 }
 
+
+
+@layer utilities {
+
+
+  /*
+   * Hide scrollbar but keep scrolling
+   */
+
+  .scrollbar-hide {
+
+    scrollbar-width: none;
+
+    -ms-overflow-style: none;
+
+  }
+
+
+  .scrollbar-hide::-webkit-scrollbar {
+
+    display: none;
+
+  }
+
+
+}
+
+
+
+@media (max-width: 640px) {
+
+
+  body {
+
+    font-size: 15px;
+
+  }
+
+
+  input,
+  select,
+  textarea {
+
+    font-size: 16px;
+
+  }
+
+
+  .card {
+
+    border-radius: 0.75rem;
+
+  }
+
+
+}
+
+
+
 @media (prefers-reduced-motion: reduce) {
-  * {
+
+
+  *,
+  *::before,
+  *::after {
+
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+
   }
+
+
 }

@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
-
 import { useAuth } from "../context/AuthContext";
 
 
@@ -21,7 +20,7 @@ const NAV_BY_ROLE = {
     {
       to: "/",
       label: "Organizations",
-      icon: ShieldCheck
+      icon: ShieldCheck,
     },
   ],
 
@@ -31,40 +30,41 @@ const NAV_BY_ROLE = {
     {
       to: "/",
       label: "Dashboard",
-      icon: LayoutGrid
+      icon: LayoutGrid,
     },
 
     {
       to: "/hostels",
       label: "Hostels",
-      icon: Building2
+      icon: Building2,
     },
 
     {
       to: "/rooms",
       label: "Rooms & Beds",
-      icon: DoorClosed
+      icon: DoorClosed,
     },
 
     {
       to: "/tenants",
       label: "Tenants",
-      icon: Users
+      icon: Users,
     },
 
     {
       to: "/expenses",
       label: "Expenses",
-      icon: Receipt
+      icon: Receipt,
     },
 
     {
       to: "/payments",
       label: "Payments",
-      icon: CreditCard
+      icon: CreditCard,
     },
 
   ],
+
 
 
   HOSTEL_MANAGER: [
@@ -72,40 +72,41 @@ const NAV_BY_ROLE = {
     {
       to: "/",
       label: "Dashboard",
-      icon: LayoutGrid
+      icon: LayoutGrid,
     },
 
     {
       to: "/hostels",
       label: "Hostels",
-      icon: Building2
+      icon: Building2,
     },
 
     {
       to: "/rooms",
       label: "Rooms & Beds",
-      icon: DoorClosed
+      icon: DoorClosed,
     },
 
     {
       to: "/tenants",
       label: "Tenants",
-      icon: Users
+      icon: Users,
     },
 
     {
       to: "/expenses",
       label: "Expenses",
-      icon: Receipt
+      icon: Receipt,
     },
 
     {
       to: "/payments",
       label: "Payments",
-      icon: CreditCard
+      icon: CreditCard,
     },
 
   ],
+
 
 
   TENANT: [
@@ -113,13 +114,13 @@ const NAV_BY_ROLE = {
     {
       to: "/",
       label: "My Room",
-      icon: UserIcon
+      icon: UserIcon,
     },
 
     {
       to: "/payments",
       label: "My Payments",
-      icon: CreditCard
+      icon: CreditCard,
     },
 
   ],
@@ -129,10 +130,28 @@ const NAV_BY_ROLE = {
 
 
 
+function MobileLabel({label}) {
+
+  const labels = {
+    "My Payments": "Payments",
+    "Rooms & Beds": "Rooms",
+    "Organizations": "Orgs",
+  };
+
+
+  return labels[label] || label;
+
+}
+
+
+
+
+
 export default function Layout({ children }) {
 
 
   const { user, logout } = useAuth();
+
 
   const navItems =
     NAV_BY_ROLE[user?.role] || [];
@@ -141,19 +160,23 @@ export default function Layout({ children }) {
 
   return (
 
-    <div className="
+    <div
+      className="
       min-h-screen
       flex
       flex-col
       md:flex-row
       overflow-x-hidden
       w-full
-    ">
+      "
+    >
 
 
-      {/* Sidebar */}
 
-      <aside className="
+      {/* Desktop Sidebar */}
+
+      <aside
+        className="
         hidden
         md:flex
         md:w-64
@@ -163,50 +186,61 @@ export default function Layout({ children }) {
         border-r
         border-border
         bg-surface
-      ">
+        "
+      >
 
 
-        <div className="
+        <div
+          className="
           px-6
           py-6
           border-b
           border-border
-        ">
+          "
+        >
 
-          <span className="
+          <span
+            className="
             font-display
             text-2xl
             font-semibold
             text-primary
-          ">
+            "
+          >
             Nestled
           </span>
 
 
-          <p className="
+          <p
+            className="
             text-xs
             text-ink-soft
             mt-0.5
-          ">
+            "
+          >
             Hostel operations, in one place
           </p>
+
 
         </div>
 
 
 
 
-        <nav className="
+
+        <nav
+          className="
           flex-1
           px-3
           py-4
           space-y-1
           overflow-y-auto
-        ">
-
+          "
+        >
 
           {
-            navItems.map(({to,label,icon:Icon})=>(
+            navItems.map(
+              ({to,label,icon:Icon}) => (
 
               <NavLink
 
@@ -216,28 +250,27 @@ export default function Layout({ children }) {
 
                 end={to === "/"}
 
-                className={({isActive}) =>
+                className={({isActive}) => `
 
-                  `
-                  flex
-                  items-center
-                  gap-3
-                  rounded-lg
-                  px-3
-                  py-2.5
-                  text-sm
-                  font-medium
-                  transition-colors
-                  ${
-                    isActive
-                    ?
-                    "bg-primary/10 text-primary-dark"
-                    :
-                    "text-ink-soft hover:bg-fog hover:text-ink"
-                  }
-                  `
+                flex
+                items-center
+                gap-3
+                rounded-lg
+                px-3
+                py-2.5
+                text-sm
+                font-medium
+                transition-colors
 
+                ${
+                  isActive
+                  ?
+                  "bg-primary/10 text-primary-dark"
+                  :
+                  "text-ink-soft hover:bg-fog hover:text-ink"
                 }
+
+                `}
 
               >
 
@@ -257,36 +290,44 @@ export default function Layout({ children }) {
 
 
 
-        <div className="
+        <div
+          className="
           px-3
           py-4
           border-t
           border-border
-        ">
+          "
+        >
 
-
-          <div className="
+          <div
+            className="
             px-3
             py-2
             mb-1
-          ">
+            "
+          >
 
-            <p className="
+            <p
+              className="
               text-sm
               font-medium
               text-ink
               truncate
-            ">
+              "
+            >
               {user?.email}
             </p>
 
 
-            <p className="
+            <p
+              className="
               text-xs
               text-ink-soft
-            ">
+              "
+            >
               {user?.role?.replace(/_/g," ")}
             </p>
+
 
           </div>
 
@@ -298,17 +339,17 @@ export default function Layout({ children }) {
             onClick={logout}
 
             className="
-              flex
-              w-full
-              items-center
-              gap-3
-              rounded-lg
-              px-3
-              py-2.5
-              text-sm
-              font-medium
-              text-clay
-              hover:bg-clay-light
+            flex
+            w-full
+            items-center
+            gap-3
+            rounded-lg
+            px-3
+            py-2.5
+            text-sm
+            font-medium
+            text-clay
+            hover:bg-clay-light
             "
 
           >
@@ -333,7 +374,8 @@ export default function Layout({ children }) {
 
       {/* Mobile Header */}
 
-      <header className="
+      <header
+        className="
         md:hidden
         flex
         items-center
@@ -343,27 +385,33 @@ export default function Layout({ children }) {
         border-b
         border-border
         bg-surface
-      ">
+        "
+      >
 
 
-        <span className="
+        <span
+          className="
           font-display
           text-xl
           font-semibold
           text-primary
-        ">
+          "
+        >
           Nestled
         </span>
 
 
 
         <button
+
           onClick={logout}
+
           className="
-            p-2
-            rounded-lg
-            text-clay
+          p-2
+          rounded-lg
+          text-clay
           "
+
         >
 
           <LogOut size={20}/>
@@ -380,9 +428,10 @@ export default function Layout({ children }) {
 
 
 
-      {/* Main Content */}
+      {/* Main */}
 
-      <main className="
+      <main
+        className="
         flex-1
         md:ml-64
         w-full
@@ -394,13 +443,10 @@ export default function Layout({ children }) {
         md:py-8
         pb-24
         md:pb-8
-      ">
+        "
+      >
 
-
-        <div className="
-          w-full
-          min-w-0
-        ">
+        <div className="w-full min-w-0">
 
           {children}
 
@@ -416,26 +462,42 @@ export default function Layout({ children }) {
 
 
 
-      {/* Mobile Bottom Navigation */}
 
-      <nav className="
+      {/* Responsive Mobile Bottom Menu */}
+
+      <nav
+        className="
         md:hidden
         fixed
         bottom-0
         inset-x-0
-        z-30
+        z-40
         bg-surface
         border-t
         border-border
-        flex
-        justify-around
-        py-2
-      ">
+        overflow-x-auto
+        "
+        style={{
+          paddingBottom:
+            "env(safe-area-inset-bottom)"
+        }}
+      >
+
+
+        <div
+          className="
+          flex
+          min-w-max
+          gap-1
+          px-2
+          py-2
+          "
+        >
 
 
         {
-          navItems.map(({to,label,icon:Icon})=>(
-
+          navItems.map(
+            ({to,label,icon:Icon}) => (
 
             <NavLink
 
@@ -445,43 +507,52 @@ export default function Layout({ children }) {
 
               end={to === "/"}
 
-              className={({isActive})=>
+              className={({isActive}) => `
 
-                `
-                flex
-                flex-col
-                items-center
-                gap-1
-                px-3
-                py-1.5
-                rounded-lg
-                text-[11px]
-                font-medium
-                ${
-                  isActive
-                  ?
-                  "text-primary-dark"
-                  :
-                  "text-ink-soft"
-                }
-                `
+              flex
+              flex-col
+              items-center
+              justify-center
+              gap-1
+              min-w-[72px]
+              px-2
+              py-2
+              rounded-lg
+              text-[11px]
+              font-medium
+              whitespace-nowrap
 
+              ${
+                isActive
+                ?
+                "text-primary-dark bg-primary/5"
+                :
+                "text-ink-soft"
               }
+
+              `}
 
             >
 
               <Icon size={20}/>
 
-              {label}
+
+              <span>
+                <MobileLabel label={label}/>
+              </span>
+
 
             </NavLink>
-
 
           ))
         }
 
 
+        </div>
+
+
       </nav>
+
 
 
     </div>

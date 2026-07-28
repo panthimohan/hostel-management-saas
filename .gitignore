@@ -230,3 +230,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Frontend builds
+frontend/dist/
+frontend/*.tar.gz
+frontend/dist_backup_*/
+
+# Temporary files
+frontend/axios
